@@ -3,8 +3,8 @@ A ChatGPT GUI interface in Python using the API.
 
 ![alt text](screenshot.png)
 
-## Why Private Chat
-As you may know, ChatGPT conversations in the Web interface are not private. OpenAI can see them, as well as other people via hacking approaches. To have a truly private usage of ChatGPT, we can use the API. <br /><br />
+## Why Private Chat?
+As you may know, ChatGPT conversations in the Web interface are not private. OpenAI can see them, as well as other people via hacking approaches. To have a [more private usage of ChatGPT](https://openai.com/enterprise-privacy), we can use the API. <br /><br />
 The API allows developers to make HTTP requests to access and utilize ChatGPT's natural language understanding and generation capabilities. This can be used for various purposes such as drafting emails, writing code, answering questions, creating conversational agents, giving the software a natural language interface, tutoring, translating languages, simulating characters for video games, and much more.
 <br /><br />
 This project is a simple ChatGPT GUI tkinter interface in Python that calls the API in the backend.
@@ -55,14 +55,15 @@ You need to create an environment variable called **OPENAI_API_KEY**. For this, 
 ```
 echo 'export OPENAI_API_KEY=your-api-key' >> ~/.bashrc<br />
 ```
-Where **your-api-key** is the API key from OpenAI
+Where **your-api-key** is the API key from OpenAI <br />
+
 2. Apply changes typing: <br />
 ```
 source ~/.bashrc
 ```
 
 ### Installing Python with the libraries needed.
-If you have an existing environment just install the openai library with:
+You need to have an existing Python environment and just install the openai library with:
 ```
 pip install openai
 ```

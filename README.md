@@ -35,9 +35,10 @@ Here’s a quick breakdown of [how it works:](https://medium.com/ux-planet/use-c
 	* Click in *Create new secret key*
 	* Define a name to the key and copy to the clipboard.
 3. Setting up an environment variable. <br />
-To be able to use your API key, you need to create an environment variable in your OS called **OPENAI_API_KEY**
+To be able to use your API key, you need to create an environment variable in your OS called **OPENAI_API_KEY** <br />
+See the instructions below in **Creating an environment variable for your API key**.
 4. Since the API usage has a [cost](https://openai.com/pricing). You will also need to setup the payment method in the **Billing** option (shown at lef on the same window that opened for *View API keys* )
-
+5. Install the required libraries for Python (see below **Installing Python with the libraries needed**).
 
 ### Creating an environment variable for your API key
 #### Windows
@@ -58,6 +59,18 @@ Where **your-api-key** is the API key from OpenAI
 2. Apply changes typing: <br />
 ```
 source ~/.bashrc
+```
+
+### Installing Python with the libraries needed.
+If you have an existing environment just install the openai library with:
+```
+pip install openai
+```
+
+## How to use it?
+Clone or download the repository, and in the terminal type:
+```
+python chat.py
 ```
 
 

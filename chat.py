@@ -167,10 +167,16 @@ def send_prompt(messages):
     prompt = prompt[:-1] if len(prompt) > 0 and prompt[-1] == "\n" else ""
 
     #prompt = prompt.replace("\n", "")
-    insert_colored_text(response_text, f"{prompt}\n", "black")
-    insert_colored_text(response_text, f"Processing prompt ...\n", "blue")
+    #insert_colored_text(response_text, f"User: {prompt}\n", "black")
+    #insert_colored_text(response_text, f"Processing prompt ...\n", "blue")
+    insert_text_response(f"User: {prompt}\n", "user")
+    insert_text_response( f"Processing prompt ...\n", "assistant")
 
     threading.Thread(target=send_prompt_thread, args=(messages, prompt,)).start()
+
+    # delete the prompt
+    prompt_text.delete("1.0", END)
+    prompt_text.mark_set("insert", "1.0")
 
 def send_prompt_thread(messages, prompt):
     """
@@ -186,11 +192,9 @@ def send_prompt_thread(messages, prompt):
     response_text.delete('end - 2 lines linestart', 'end - 1 line')
 
     # and write the response
-    insert_colored_text(response_text, f"{response}\n\n", "blue")
+    #insert_colored_text(response_text, f"Assistant: {response}\n\n", "blue")
+    insert_text_response(f"Assistant: {response}\n\n", "assistant")
 
-    # delete the prompt
-    prompt_text.delete("1.0", END)
-    prompt_text.mark_set("insert", "1.0")
 
 def insert_colored_text(text_widget, text, color):
     """
@@ -231,6 +235,68 @@ def get_output_filename(source_file_path, prepend_text):
         counter += 1
 
     return target_file_path
+
+def insert_text_response(text, role):
+    if role == "assistant":
+        insert_colored_text(response_text, f"Assistant: {text}\n", "blue")
+    elif role == "user":
+        insert_colored_text(response_text, f"User: {text}\n", "black")
+
+def parse_conversation(conversation, messages):
+    lines = conversation.split('\n')
+    current_role = None
+    current_content = []
+
+    for line in lines:
+        if line.startswith("User:"):
+            if current_role is not None:
+                text = "\n".join(current_content)
+                messages.append({"role": current_role, "content": text})
+                insert_text_response(text, current_role)
+
+            current_role = "user"
+            current_content = [line.replace("User:", "").strip()]
+        elif line.startswith("Assistant:"):
+            if current_role is not None:
+                text = "\n".join(current_content)
+                messages.append({"role": current_role, "content": text})
+                insert_text_response(text, current_role)
+            current_role = "assistant"
+            current_content = [line.replace("Assistant:", "").strip()]
+        else:
+            current_content.append(line.strip())
+
+    # Append the last message
+    if current_role is not None:
+        text = "\n".join(current_content)
+        messages.append({"role": current_role, "content": text})
+        insert_text_response(text, current_role)
+
+    return messages
+
+def import_data(messages=[]):
+    global last_used_directory
+
+    # Use the last used directory as the initial dir if it's not None, otherwise use a default
+    initial_dir = last_used_directory if last_used_directory is not None else Path(file_path_var.get()).parent
+    default_name = get_output_filename(Path("."), "chat")
+    filetypes = [('Text files', '*.txt'), ('All files', '*.*')]
+    filepath = filedialog.askopenfilename(title="Open an existing conversation",
+                                          initialdir=initial_dir,
+                                          defaultextension=".txt",
+                                          filetypes=filetypes)
+    if filepath:
+        print(filepath)
+        source_file_path = Path(filepath)
+        last_used_directory = source_file_path.parent
+
+        print(f"Importing conversation from {source_file_path}")
+        imported_text = source_file_path.read_text()
+        messages = parse_conversation(imported_text, messages)
+
+        print("IMPORTED CONVERSATION")
+        print(messages)
+
 
 def export_data(messages=[]):
     """
@@ -404,7 +470,7 @@ if __name__ == "__main__":
     response_label = Label(root, text="Conversation:", font=custom_font)
     response_label.grid(row=7, column=0, pady=5, padx=padx, sticky=W)
 
-    response_text = Text(root, wrap=WORD, height=20, width=width_widget, font=custom_font)
+    response_text = Text(root, wrap=WORD, height=18, width=width_widget, font=custom_font)
     response_text.grid(row=8, column=0, padx=padx, pady=5, sticky=W)
     text_scrollbar = Scrollbar(root, command=response_text.yview)
     text_scrollbar.grid(row=8, column=1, sticky=N+S)
@@ -412,24 +478,30 @@ if __name__ == "__main__":
     # Export chat and new chat buttons
      # Frame for model characteristics 3 columns
     export_and_new_frame = Frame(root)
-    export_and_new_frame.grid(row=11, column=0, columnspan=2, pady=5, sticky=W)
+    export_and_new_frame.grid(row=11, column=0, columnspan=4, pady=5, sticky=W)
 
+    import_chat_button = Button(export_and_new_frame, text="Import Conversation",
+                         command=lambda: import_data(messages=messages),
+                         font=custom_font)
+    import_chat_button.grid(row=0, column=0, pady=5, padx=padx, sticky=W)
+    import_chat_button.config(state="normal")
+    
     export_chat_button = Button(export_and_new_frame, text="Export Conversation",
                          command=lambda: export_data(messages=messages),
                          font=custom_font)
-    export_chat_button.grid(row=0, column=0, pady=5, padx=padx, sticky=W)
+    export_chat_button.grid(row=0, column=1, pady=5, padx=padx, sticky=W)
     export_chat_button.config(state="normal")
 
     new_chat_button = Button(export_and_new_frame, text="New Conversation",
                          command=new_conversation,
                          font=custom_font)
-    new_chat_button.grid(row=0, column=1, pady=5, padx=padx, sticky=W)
+    new_chat_button.grid(row=0, column=2, pady=5, padx=padx, sticky=W)
     new_chat_button.config(state="normal")
 
     jailbreak_button = Button(export_and_new_frame, text="Jailbreak DAN",
                          command=jailbreak_system,
                          font=custom_font)
-    jailbreak_button.grid(row=0, column=2, pady=5, padx=padx, sticky=W)
+    jailbreak_button.grid(row=0, column=3, pady=5, padx=padx, sticky=W)
     jailbreak_button.config(state="normal")
 
     root.mainloop()

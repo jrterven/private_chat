@@ -9,7 +9,7 @@ Contact: jrterven@hotmail.com
 import os
 import sys
 from pathlib import Path
-import openai
+from openai import OpenAI
 from tkinter import filedialog
 from tkinter import *
 import threading
@@ -108,7 +108,7 @@ def new_conversation():
     response_text.delete("1.0", END)
     response_text.mark_set("insert", "1.0")
 
-def gpt_analyze_text(messages, content):
+def gpt_analyze_text(client, messages, content):
     """
     Send user message to GPT-3.5, get model's response, and update the message history.
 
@@ -122,7 +122,7 @@ def gpt_analyze_text(messages, content):
     print(f"Using model:{model} with temperature:{temperature}")
 
     # Call ChatGPT
-    completion = openai.ChatCompletion.create(
+    completion = client.chat.completions.create(
         model=model,
         messages=messages,
         temperature=float(temperature)
@@ -136,7 +136,7 @@ def gpt_analyze_text(messages, content):
 
     return messages, chat_response
 
-def handle_return(event):
+def handle_return(event, client):
     """
     Handle the return key event: if Shift is pressed, insert a new line;
     otherwise, send the prompt.
@@ -150,11 +150,11 @@ def handle_return(event):
         prompt_text.insert("insert", '\n')
     else:
         # If shift is not pressed, call your send_prompt function
-        send_prompt(messages)
+        send_prompt(client, messages)
     # Stop the event from propagating further
     return "break"
 
-def send_prompt(messages):
+def send_prompt(client, messages):
     """
     Extract text from the prompt_text widget, display it in the response_text
     widget, and initiate a new thread to handle sending the prompt.
@@ -172,13 +172,13 @@ def send_prompt(messages):
     insert_text_response(f"User: {prompt}\n", "user")
     insert_text_response( f"Processing prompt ...\n", "assistant")
 
-    threading.Thread(target=send_prompt_thread, args=(messages, prompt,)).start()
+    threading.Thread(target=send_prompt_thread, args=(client, messages, prompt,)).start()
 
     # delete the prompt
     prompt_text.delete("1.0", END)
     prompt_text.mark_set("insert", "1.0")
 
-def send_prompt_thread(messages, prompt):
+def send_prompt_thread(client, messages, prompt):
     """
     Send a prompt to the GPT model, update messages with model response, and
     update UI elements accordingly.
@@ -186,7 +186,7 @@ def send_prompt_thread(messages, prompt):
     :param messages: list, Previous messages in the format [{"role": str, "content": str}, ...]
     :param prompt: str, Text to be sent to GPT model
     """
-    messages, response = gpt_analyze_text(messages, prompt)
+    messages, response = gpt_analyze_text(client, messages, prompt)
     
     # Remove the "processing prompt ...""
     response_text.delete('end - 2 lines linestart', 'end - 1 line')
@@ -398,6 +398,8 @@ if __name__ == "__main__":
     
     # Get the API key from the OS
     api_key = get_api_key()
+    client = OpenAI(api_key=api_key)
+
 
     # Calculate the proportions of the main window
     window_width = 800
@@ -426,7 +428,8 @@ if __name__ == "__main__":
     # Model type: GPT 3.5 or GPT 4
     # Create the dropdown list to select the model
     model_var.set(model)
-    model_options = OptionMenu(mode_features_frame, model_var, "gpt-3.5-turbo-16k", "gpt-4")
+    model_options = OptionMenu(mode_features_frame, model_var,
+                               "gpt-3.5-turbo-16k", "gpt-4-32k", "gpt-4-1106-preview")
     model_options.grid(row=0, column=0, padx=20, pady=4, sticky=W)
     model_var.trace("w", update_model)
 
@@ -458,11 +461,11 @@ if __name__ == "__main__":
     prompt_label.grid(row=3, column=0, pady=5, padx=padx, sticky=W)
 
     prompt_text = Text(root, wrap=WORD, height=5, width=width_widget, font=custom_font)
-    prompt_text.bind("<Return>", handle_return)
+    prompt_text.bind("<Return>", lambda event, arg=client: handle_return(event, arg))
     prompt_text.grid(row=4, column=0, padx=padx, pady=5, sticky=W)
 
     send_button = Button(root, text="Send Prompt",
-                         command=lambda: send_prompt(messages),
+                         command=lambda: send_prompt(client, messages),
                          font=custom_font)
     send_button.grid(row=5, column=0, pady=5, padx=padx, sticky=W)
 

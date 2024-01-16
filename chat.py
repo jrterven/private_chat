@@ -10,6 +10,7 @@ import os
 from pathlib import Path
 from openai import OpenAI
 import tkinter as tk
+from tkinter import filedialog
 import threading
 from tkinter import font
 
@@ -299,7 +300,7 @@ def import_data(messages=[]):
     initial_dir = last_used_directory if last_used_directory is not None else Path(file_path_var.get()).parent
     default_name = get_output_filename(Path("."), "chat")
     filetypes = [('Text files', '*.txt'), ('All files', '*.*')]
-    filepath = tk.filedialog.askopenfilename(title="Open an existing conversation",
+    filepath = filedialog.askopenfilename(title="Open an existing conversation",
                                           initialdir=initial_dir,
                                           defaultextension=".txt",
                                           filetypes=filetypes)
@@ -335,7 +336,7 @@ def export_data(messages=[]):
     initial_dir = last_used_directory if last_used_directory is not None else Path(file_path_var.get()).parent
     default_name = get_output_filename(Path("."), "chat")
     filetypes = [('Text files', '*.txt'), ('All files', '*.*')]
-    filepath = tk.filedialog.asksaveasfilename(initialdir=initial_dir,
+    filepath = filedialog.asksaveasfilename(initialdir=initial_dir,
                                             initialfile=default_name,
                                             defaultextension=".txt",
                                             filetypes=filetypes)
